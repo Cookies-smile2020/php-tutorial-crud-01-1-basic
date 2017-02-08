@@ -45,10 +45,24 @@
 <?php
 // include database connection
 include 'config/database.php';
+
+// PAGINATION VARIABLES
+// page is the current page, if there's nothing set, default is page 1
+$page = isset($_GET['page']) ? $_GET['page'] : 1;
  
-// select all data
-$query = "SELECT id, name, description, price FROM products ORDER BY id DESC";
+// set records or rows of data per page
+$records_per_page = 5;
+ 
+// calculate for the query LIMIT clause
+$from_record_num = ($records_per_page * $page) - $records_per_page;
+ 
+// select data for current page
+$query = "SELECT id, name, description, price FROM products ORDER BY id DESC
+    LIMIT :from_record_num, :records_per_page";
+ 
 $stmt = $con->prepare($query);
+$stmt->bindParam(":from_record_num", $from_record_num, PDO::PARAM_INT);
+$stmt->bindParam(":records_per_page", $records_per_page, PDO::PARAM_INT);
 $stmt->execute();
  
 // this is how to get number of rows returned
@@ -101,6 +115,22 @@ if($num>0){
      
     // end table
     echo "</table>";
+    
+    // PAGINATION
+    // count total number of rows
+    $query = "SELECT COUNT(*) as total_rows FROM products";
+    $stmt = $con->prepare($query);
+     
+    // execute query
+    $stmt->execute();
+     
+    // get total rows
+    $row = $stmt->fetch(PDO::FETCH_ASSOC);
+    $total_rows = $row['total_rows'];   
+
+    // paginate records
+    $page_url="read.php?";
+    include_once "paging.php";
      
 }
  
